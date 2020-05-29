@@ -48,7 +48,7 @@ const config = {
     frontline: false,
     ignoreIndex: true,
     title:
-      "<a href='https://hasura.io/learn/'>graphql </a><div class='greenCircle'></div><a href='https://hasura.io/learn/graphql/react/introduction/'>react</a>",
+      "Gracelia's doc",
   },
   siteMetadata: {
     title: 'Gatsby Gitbook Boilerplate | Hasura',
@@ -75,7 +75,7 @@ const config = {
         },
       ],
     },
-  },
+  }
 };
 
 module.exports = config;
