@@ -1,6 +1,18 @@
 require("dotenv").config();
 const queries = require("./src/utils/algolia");
 const config = require("./config");
+const { isNil } = require('lodash')
+const mapPagesUrls = {
+  index: '/',
+}
+const myPlugin = (lunr) => (builder) => {
+  // removing stemmer
+  builder.pipeline.remove(lunr.stemmer)
+  builder.searchPipeline.remove(lunr.stemmer)
+  // or similarity tuning
+  builder.k1(1.3)
+  builder.b(0)
+}
 const plugins = [
   'gatsby-plugin-sitemap',
   'gatsby-plugin-sharp',
@@ -16,7 +28,7 @@ const plugins = [
     resolve: "gatsby-source-filesystem",
     options: {
       name: "docs",
-      path: `${__dirname}/content/`
+      path: `${__dirname}/posts`
     }
   },
   {
@@ -48,6 +60,60 @@ const plugins = [
       anonymize: false,
     },
   },
+  {
+    resolve: 'gatsby-plugin-lunr',
+    options: {
+      // ISO 639-1 language codes. See https://lunrjs.com/guides/language_support.html for details
+      languages: [{
+        // ISO 639-1 language codes. See https://lunrjs.com/guides/language_support.html for details
+        name: 'en',
+        filterNodes: node => {
+          // const myConsole = new console.Console(out, err);
+          // myConsole.log('THIS IS CUSTOM TEST OF NODE ' + node.keys().toString())
+          // if (node.frontmatter && node.frontmatter.path && node.frontmatter.path.includes('/posts')) {
+          //   console.log('-----THIS IS CUSTOM OUTPUT------ nodes' + JSON.stringify(node))
+          // }
+          return node.frontmatter && node.frontmatter.path && node.frontmatter.path.includes('/posts')
+        }
+      }, {
+        // ISO 639-1 language codes. See https://lunrjs.com/guides/language_support.html for details
+        name: 'zh',
+        filterNodes: node => {
+          // const myConsole = new console.Console(out, err);
+          // myConsole.log('THIS IS CUSTOM TEST OF NODE ' + node.keys().toString())
+          // if (node.frontmatter && node.frontmatter.path && node.frontmatter.path.includes('/posts')) {
+          //   console.log('-----THIS IS CUSTOM OUTPUT------ nodes' + JSON.stringify(node))
+          // }
+          return node.frontmatter && node.frontmatter.path && node.frontmatter.path.includes('/posts')
+        }
+      }],
+      // Fields to index. If store === true value will be stored in index file.
+      // Attributes for custom indexing logic. See https://lunrjs.com/docs/lunr.Builder.html for details
+      fields: [
+        { name: 'title', store: true, attributes: { boost: 20 } },
+        { name: 'description', store: true },
+        { name: 'content', store: true },
+        { name: 'path', store: true },
+        { name: 'url', store: true },
+      ],
+      // A function for filtering nodes. () => true by default
+      filterNodes: (node) => {
+        // const myConsole = new console.Console(out, err);
+        // myConsole.log('THIS IS CUSTOM TEST OF NODE ' + node.keys().toString())
+        return !isNil(node.frontmatter);
+      },
+      // How to resolve each field's value for a supported node type
+      resolvers: {
+        // For any node of type MarkdownRemark, list how to resolve the fields' values
+        Mdx: {
+          title: (node) => node.frontmatter.title,
+          description: (node) => node.frontmatter.description,
+          content: (node) => node.rawBody,
+          url: (node) => node.fields.slug,
+        },
+      },
+    },
+  }
 ];
 // check and add algolia
 if (config.header.search && config.header.search.enabled && config.header.search.algoliaAppId && config.header.search.algoliaAdminKey) {
